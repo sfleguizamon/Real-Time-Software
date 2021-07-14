@@ -1,0 +1,2596 @@
+[
+    {
+        "id": "8381c865.236028",
+        "type": "subflow",
+        "name": "Single value",
+        "info": "The 'single value' subflow allows to extract data from processing node.\r\n\r\n * Filter Data to extract only one variable after the \"processing node\" step .\r\n * Modify the message to fit with standard widgets such as gauges.\r\n * Limit the number of messages to a maximum of 10 msg per second.\r\n\r\n### **Input**\r\n\r\nThe subflow 'single value' takes in input the `msg.payload`\r\nfrom the processing output. All the messages sent by the processing node have the same structure.\r\n\r\n    \"payload\": {\r\n        \"groupname\": \"Snapshot2\",\r\n        \"variabledata\": [\r\n            {\r\n                \"y\": \"9\",\r\n                \"x\": \"1567509421459\"\r\n            },\r\n            {\r\n                \"y\": \"9\",\r\n                \"x\": \"1567509421459\"\r\n            },\r\n            {\r\n                \"y\": \"9\",\r\n                \"x\": \"1567509421459\"\r\n            }\r\n        ],\r\n        \"variablename\": \"int2\"\r\n      }\r\n    }\r\n\r\n### **Filter on selected variable**\r\nSeveral messages are sent by the processing node for each variable, so the first step of this 'single value' subflow is to filter and keep only messages related to the selected variable.\r\nThe 'filter variable' node will only keep messages with the right `variablename` key.\r\n\r\n### **Extract duplets table**\r\n\r\nThe received message is an Object containing {groupname, variabledata[array], variablename}.  \r\nThe array contains two variables :\r\n - `y` the value \r\n - `x` the time\r\n\r\nA single message contains multiple pairs of values extract at a regular time interval.\r\nThe time interval depends on the acquisition frequency.\r\nWith the 'change' node and the `set` property, the `msg.payload` is set to \r\n`msg.payload.variabledata`, only the data variable array is set into msg.payload.\r\n\r\n    \"payload\": {\r\n        \"variabledata\": [\r\n            {\r\n                \"y\": \"9\",\r\n                \"x\": \"1567509421459\"\r\n            },\r\n            {\r\n                \"y\": \"9\",\r\n                \"x\": \"1567509421459\"\r\n            },\r\n            {\r\n                \"y\": \"9\",\r\n                \"x\": \"1567509421459\"\r\n            }\r\n        ]\r\n    }\r\n\r\n### **Split duplets table**\r\n\r\nThe data variable array is split with a length of one in smaller objects by the 'split' node.\r\nEach new object contains two subvariables : `y` and `x`.\r\n\r\n    \"payload\": {\r\n        \"y\": \"9\",\r\n        \"x\": \"1567509421459\"\r\n    }\r\n\r\n\r\n### **Limit the number of messages**\r\n\r\nThe 'delay' node allows to limit the maximum number of message per second.\r\nIn the 'single value' subflow, one message is extracted per second.\r\n\r\n>_Be careful, a dashboard saturation risk exists if too many messages are received per second._\r\n\r\n### **Extract only y values**\r\n\r\nThe `msg.payload` is set to `msg.payload.y` with the `set` property. \r\nOnly `y` variable is set into msg.payload as single value.\r\n\r\n    \"payload\": { \r\n        \"y\": \"9\" \r\n    }\r\n\r\n### **Output** \r\n\r\nSome widgets such as the gauge and the text node are using the `msg.payload` property.  \r\nThe output node is linked to a gauge that allows to see the evolution \r\nof the `y` variable as a function of time.\r\n\r\n\r\n![subflow_gauge](images/subflow_gauge.png)\r\n\r\n### **Details**\r\n\r\nNote : The debug node allows to see clearly and easily the \r\nmessage at the node output.  \r\n\r\n\r\n> More details on : [Node-Red](https://nodered.org/docs/user-guide/editor/workspace/subflows)\r\n\r\n\r\n-------\r\n\r\n",
+        "category": "",
+        "in": [
+            {
+                "x": 40,
+                "y": 60,
+                "wires": [
+                    {
+                        "id": "3c5ffe0d.9063b2"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 780,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "66397fd3.d8111",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "varfilter",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-filter",
+                    "label": {
+                        "en-US": "Variable"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            }
+        ],
+        "color": "#3CB4E6"
+    },
+    {
+        "id": "3c5ffe0d.9063b2",
+        "type": "switch",
+        "z": "8381c865.236028",
+        "name": "filter variable",
+        "property": "payload.variablename",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "varfilter",
+                "vt": "env"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 170,
+        "y": 60,
+        "wires": [
+            [
+                "4e5ba7a5.14dec8"
+            ]
+        ]
+    },
+    {
+        "id": "4e5ba7a5.14dec8",
+        "type": "change",
+        "z": "8381c865.236028",
+        "name": "keep only table of duplets",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.variabledata",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 60,
+        "wires": [
+            [
+                "42bc6ed.5b20d9"
+            ]
+        ]
+    },
+    {
+        "id": "42bc6ed.5b20d9",
+        "type": "split",
+        "z": "8381c865.236028",
+        "name": "Split a table[1..n] of duplets in n msg of single duplet",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 800,
+        "y": 60,
+        "wires": [
+            [
+                "8b8ddb84.6fb208"
+            ]
+        ]
+    },
+    {
+        "id": "8b8ddb84.6fb208",
+        "type": "delay",
+        "z": "8381c865.236028",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "10",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "x": 200,
+        "y": 140,
+        "wires": [
+            [
+                "66397fd3.d8111"
+            ]
+        ]
+    },
+    {
+        "id": "66397fd3.d8111",
+        "type": "change",
+        "z": "8381c865.236028",
+        "name": "keep only value and delete timestamp",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.y",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6a1c46a5.451958",
+        "type": "tab",
+        "label": "Test bench",
+        "disabled": false,
+        "info": "# Basic flow to start with STM32CubeMonitor."
+    },
+    {
+        "id": "70cf230b.9efa1c",
+        "type": "acquisition out",
+        "z": "6a1c46a5.451958",
+        "name": "myProbe_Out",
+        "probeconfig": "fa36f858.07eec8",
+        "x": 740,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "1a8c71eb.1530fe",
+        "type": "acquisition in",
+        "z": "6a1c46a5.451958",
+        "name": "myProbe_In",
+        "probeconfig": "ca6fb651.6ca448",
+        "x": 190,
+        "y": 360,
+        "wires": [
+            [
+                "d36fd36a.08568"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "5f81a26c.2609ac",
+        "type": "variables",
+        "z": "6a1c46a5.451958",
+        "groupname": "myVariables",
+        "accesspoint": 0,
+        "execonfig": "6ebce83e.593f48",
+        "variablelist": [],
+        "triggerstartmode": "manual",
+        "triggername": "OSCPUUsage",
+        "triggerthreshold": "30000",
+        "frequency": "",
+        "frequencyType": "0",
+        "snapshotheader": "",
+        "mode": "direct",
+        "lastImportedTime": 1626220208000,
+        "openStatus": true,
+        "x": 510,
+        "y": 80,
+        "wires": [
+            [
+                "70cf230b.9efa1c"
+            ]
+        ]
+    },
+    {
+        "id": "3f46362d.7aef2a",
+        "type": "ui_button",
+        "z": "6a1c46a5.451958",
+        "name": "",
+        "group": "a086929b.734ff",
+        "order": 10,
+        "width": 5,
+        "height": 1,
+        "passthru": false,
+        "label": "START Acquisition",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "start",
+        "x": 270,
+        "y": 40,
+        "wires": [
+            [
+                "5f81a26c.2609ac"
+            ]
+        ]
+    },
+    {
+        "id": "489d026e.19895c",
+        "type": "ui_button",
+        "z": "6a1c46a5.451958",
+        "name": "",
+        "group": "a086929b.734ff",
+        "order": 11,
+        "width": 5,
+        "height": 1,
+        "passthru": true,
+        "label": "STOP Acquisition",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "stop",
+        "x": 270,
+        "y": 120,
+        "wires": [
+            [
+                "5f81a26c.2609ac"
+            ]
+        ]
+    },
+    {
+        "id": "d36fd36a.08568",
+        "type": "processing",
+        "z": "6a1c46a5.451958",
+        "groupname": "myVariables",
+        "groupid": "5f81a26c.2609ac",
+        "expressions": [],
+        "statistics": [],
+        "logmode": "no",
+        "x": 410,
+        "y": 360,
+        "wires": [
+            [
+                "e07697c0.ad5198",
+                "50cd572e.2f6048",
+                "408f47b2.1307b8",
+                "5f8459ec.625888",
+                "d1b8d294.c0fca",
+                "4424fa82.f8e5b4",
+                "3384edfb.c68ff2"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "23e4967e.8a699a",
+        "type": "ui_text",
+        "z": "6a1c46a5.451958",
+        "group": "a086929b.734ff",
+        "order": 8,
+        "width": 5,
+        "height": 1,
+        "name": "",
+        "label": "Sequence group number:  ",
+        "format": "{{msg.payload}}",
+        "layout": "row-center",
+        "x": 890,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "e94571e8.09197",
+        "type": "ui_gauge",
+        "z": "6a1c46a5.451958",
+        "name": "",
+        "group": "a086929b.734ff",
+        "order": 2,
+        "width": 5,
+        "height": 5,
+        "gtype": "gage",
+        "title": "Measured frequency",
+        "label": "Hz",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100000",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 880,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "e07697c0.ad5198",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "measured_freq",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "measured_freq",
+                "type": "str"
+            }
+        ],
+        "x": 640,
+        "y": 420,
+        "wires": [
+            [
+                "e94571e8.09197"
+            ]
+        ]
+    },
+    {
+        "id": "50cd572e.2f6048",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "seq_number",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "seq_number",
+                "type": "str"
+            }
+        ],
+        "x": 630,
+        "y": 240,
+        "wires": [
+            [
+                "23e4967e.8a699a"
+            ]
+        ]
+    },
+    {
+        "id": "d1b8d294.c0fca",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "frequencymeter_en",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "frequencymeter_en",
+                "type": "str"
+            }
+        ],
+        "x": 650,
+        "y": 360,
+        "wires": [
+            [
+                "f10a9faf.6093c"
+            ]
+        ]
+    },
+    {
+        "id": "408f47b2.1307b8",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "OSCPUUsage",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "OSCPUUsage",
+                "type": "str"
+            }
+        ],
+        "x": 640,
+        "y": 480,
+        "wires": [
+            [
+                "9ff4d370.6698e"
+            ]
+        ]
+    },
+    {
+        "id": "3384edfb.c68ff2",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "output_mode",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "output_mode",
+                "type": "str"
+            }
+        ],
+        "x": 630,
+        "y": 180,
+        "wires": [
+            [
+                "c6b3c33e.0ae9",
+                "149f1494.869f8b"
+            ]
+        ]
+    },
+    {
+        "id": "4424fa82.f8e5b4",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "sin_gen_freq",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "sin_gen_freq",
+                "type": "str"
+            }
+        ],
+        "x": 630,
+        "y": 300,
+        "wires": [
+            [
+                "b442e350.0b664"
+            ]
+        ]
+    },
+    {
+        "id": "5f8459ec.625888",
+        "type": "subflow:8381c865.236028",
+        "z": "6a1c46a5.451958",
+        "name": "OSTaskCtr",
+        "env": [
+            {
+                "name": "varfilter",
+                "value": "OSTaskCtr",
+                "type": "str"
+            }
+        ],
+        "x": 630,
+        "y": 540,
+        "wires": [
+            [
+                "330ee676.73a38a"
+            ]
+        ]
+    },
+    {
+        "id": "f10a9faf.6093c",
+        "type": "ui_led",
+        "z": "6a1c46a5.451958",
+        "order": 5,
+        "group": "a086929b.734ff",
+        "width": 5,
+        "height": 1,
+        "label": "Frequencymeter",
+        "labelPlacement": "left",
+        "labelAlignment": "right",
+        "colorForValue": [
+            {
+                "color": "#ff0000",
+                "value": "0",
+                "valueType": "num"
+            },
+            {
+                "color": "#008000",
+                "value": "255",
+                "valueType": "num"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showGlow": true,
+        "name": "",
+        "x": 830,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "c6b3c33e.0ae9",
+        "type": "ui_led",
+        "z": "6a1c46a5.451958",
+        "order": 3,
+        "group": "a086929b.734ff",
+        "width": 4,
+        "height": 1,
+        "label": "Sine synthesizer",
+        "labelPlacement": "right",
+        "labelAlignment": "left",
+        "colorForValue": [
+            {
+                "color": "#ff0000",
+                "value": "0",
+                "valueType": "num"
+            },
+            {
+                "color": "#008000",
+                "value": "255",
+                "valueType": "num"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showGlow": true,
+        "name": "",
+        "x": 830,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "149f1494.869f8b",
+        "type": "ui_led",
+        "z": "6a1c46a5.451958",
+        "order": 6,
+        "group": "a086929b.734ff",
+        "width": 4,
+        "height": 1,
+        "label": "Low freq. sequences",
+        "labelPlacement": "right",
+        "labelAlignment": "center",
+        "colorForValue": [
+            {
+                "color": "#ff0000",
+                "value": "255",
+                "valueType": "num"
+            },
+            {
+                "color": "#008000",
+                "value": "0",
+                "valueType": "num"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showGlow": true,
+        "name": "",
+        "x": 830,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "b442e350.0b664",
+        "type": "ui_gauge",
+        "z": "6a1c46a5.451958",
+        "name": "",
+        "group": "a086929b.734ff",
+        "order": 1,
+        "width": 5,
+        "height": 5,
+        "gtype": "gage",
+        "title": "Sine frequency",
+        "label": "Hz",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "500",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 860,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "330ee676.73a38a",
+        "type": "ui_chart",
+        "z": "6a1c46a5.451958",
+        "name": "Tasks",
+        "group": "814924b6.076658",
+        "order": 2,
+        "width": 5,
+        "height": 4,
+        "label": "Active tasks",
+        "chartType": "bar",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Tasks",
+        "dot": false,
+        "ymin": "",
+        "ymax": "15",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 830,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9ff4d370.6698e",
+        "type": "ui_gauge",
+        "z": "6a1c46a5.451958",
+        "name": "",
+        "group": "814924b6.076658",
+        "order": 1,
+        "width": 5,
+        "height": 5,
+        "gtype": "gage",
+        "title": "CPU Usage",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 850,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "fa36f858.07eec8",
+        "type": "probe",
+        "probeid": "50FF6F064989565120192287",
+        "probename": "ST-Link v2 (...92287)",
+        "protocol": "SWD",
+        "frequency": "1.8 MHz - Default",
+        "probeproperty": "{\"SWD\":[\"4.6 MHz\",\"1.8 MHz - Default\",\"950 kHz\",\"400 kHz\",\"150 kHz\"],\"JTAG\":[\"18 MHz\",\"9 MHz\",\"4.5 MHz\",\"2.25 MHz\",\"1.12 MHz - Default\",\"560 kHz\",\"280 kHz\",\"140 kHz\"]}",
+        "probeversion": "ST Link firmware version V2.J37",
+        "connectionType": "p2p"
+    },
+    {
+        "id": "ca6fb651.6ca448",
+        "type": "probe",
+        "probeid": "50FF6F064989565120192287",
+        "probename": "ST-Link v2 (...92287)",
+        "protocol": "SWD",
+        "frequency": "1.8 MHz - Default",
+        "probeproperty": "{\"SWD\":[\"4.6 MHz\",\"1.8 MHz - Default\",\"950 kHz\",\"400 kHz\",\"150 kHz\"],\"JTAG\":[\"18 MHz\",\"9 MHz\",\"4.5 MHz\",\"2.25 MHz\",\"1.12 MHz - Default\",\"560 kHz\",\"280 kHz\",\"140 kHz\"]}",
+        "probeversion": "ST Link firmware version V2.J37",
+        "connectionType": "p2p"
+    },
+    {
+        "id": "6ebce83e.593f48",
+        "type": "exe-config",
+        "name": "variables",
+        "exefile": "D:\\Users\\stgol\\Documents\\UTN\\6to\\Software_en_Tiempo_Real\\Practico\\03_HAL_DIO\\BluePill_UCOSII\\uCOSII\\Debug\\uCOSII.elf",
+        "exefolder": "D:\\Users\\stgol\\Documents\\UTN\\6to\\Software_en_Tiempo_Real\\Practico\\03_HAL_DIO\\BluePill_UCOSII\\uCOSII\\Debug",
+        "exevariablelist": [
+            {
+                "address": "0x0800b668",
+                "name": "AHBPrescTable[0]",
+                "type": 1
+            },
+            {
+                "address": "0x0800b678",
+                "name": "APBPrescTable[0]",
+                "type": 1
+            },
+            {
+                "address": "0x20000294",
+                "name": "DIOTaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x200012d5",
+                "name": "DITbl[0].DIBypassEn",
+                "type": 1
+            },
+            {
+                "address": "0x200012d0",
+                "name": "DITbl[0].DIIn",
+                "type": 1
+            },
+            {
+                "address": "0x200012d6",
+                "name": "DITbl[0].DIModeSel",
+                "type": 1
+            },
+            {
+                "address": "0x200012d4",
+                "name": "DITbl[0].DIPrev",
+                "type": 1
+            },
+            {
+                "address": "0x200012d8",
+                "name": "DITbl[0].DITrigFnct",
+                "type": 5
+            },
+            {
+                "address": "0x200012dc",
+                "name": "DITbl[0].DITrigFnctArg",
+                "type": 5
+            },
+            {
+                "address": "0x200012d2",
+                "name": "DITbl[0].DIVal",
+                "type": 3
+            },
+            {
+                "address": "0x200012cc",
+                "name": "DOSyncCtr",
+                "type": 1
+            },
+            {
+                "address": "0x200012cd",
+                "name": "DOSyncCtrMax",
+                "type": 1
+            },
+            {
+                "address": "0x20001357",
+                "name": "DOTbl[0].DOA",
+                "type": 1
+            },
+            {
+                "address": "0x20001358",
+                "name": "DOTbl[0].DOB",
+                "type": 1
+            },
+            {
+                "address": "0x20001359",
+                "name": "DOTbl[0].DOBCtr",
+                "type": 1
+            },
+            {
+                "address": "0x20001355",
+                "name": "DOTbl[0].DOBlinkEnSel",
+                "type": 1
+            },
+            {
+                "address": "0x20001352",
+                "name": "DOTbl[0].DOBypass",
+                "type": 1
+            },
+            {
+                "address": "0x20001353",
+                "name": "DOTbl[0].DOBypassEn",
+                "type": 1
+            },
+            {
+                "address": "0x20001351",
+                "name": "DOTbl[0].DOCtrl",
+                "type": 1
+            },
+            {
+                "address": "0x20001356",
+                "name": "DOTbl[0].DOInv",
+                "type": 1
+            },
+            {
+                "address": "0x20001354",
+                "name": "DOTbl[0].DOModeSel",
+                "type": 1
+            },
+            {
+                "address": "0x20001350",
+                "name": "DOTbl[0].DOOut",
+                "type": 1
+            },
+            {
+                "address": "0x2000175a",
+                "name": "frequencymeter_en",
+                "type": 3,
+                "checked": true
+            },
+            {
+                "address": "0x2000023c",
+                "name": "FS_Desc.GetConfigurationStrDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000228",
+                "name": "FS_Desc.GetDeviceDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000240",
+                "name": "FS_Desc.GetInterfaceStrDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x2000022c",
+                "name": "FS_Desc.GetLangIDStrDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000230",
+                "name": "FS_Desc.GetManufacturerStrDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000234",
+                "name": "FS_Desc.GetProductStrDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000238",
+                "name": "FS_Desc.GetSerialStrDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20003eb0",
+                "name": "hpcd_USB_FS.BESL",
+                "type": 5
+            },
+            {
+                "address": "0x20003e78",
+                "name": "hpcd_USB_FS.ErrorCode",
+                "type": 5
+            },
+            {
+                "address": "0x20003bf8",
+                "name": "hpcd_USB_FS.IN_ep[0].data_pid_start",
+                "type": 1
+            },
+            {
+                "address": "0x20003c00",
+                "name": "hpcd_USB_FS.IN_ep[0].doublebuffer",
+                "type": 1
+            },
+            {
+                "address": "0x20003bf5",
+                "name": "hpcd_USB_FS.IN_ep[0].is_in",
+                "type": 1
+            },
+            {
+                "address": "0x20003bf6",
+                "name": "hpcd_USB_FS.IN_ep[0].is_stall",
+                "type": 1
+            },
+            {
+                "address": "0x20003c04",
+                "name": "hpcd_USB_FS.IN_ep[0].maxpacket",
+                "type": 5
+            },
+            {
+                "address": "0x20003bf4",
+                "name": "hpcd_USB_FS.IN_ep[0].num",
+                "type": 1
+            },
+            {
+                "address": "0x20003bfc",
+                "name": "hpcd_USB_FS.IN_ep[0].pmaaddr0",
+                "type": 3
+            },
+            {
+                "address": "0x20003bfe",
+                "name": "hpcd_USB_FS.IN_ep[0].pmaaddr1",
+                "type": 3
+            },
+            {
+                "address": "0x20003bfa",
+                "name": "hpcd_USB_FS.IN_ep[0].pmaadress",
+                "type": 3
+            },
+            {
+                "address": "0x20003c02",
+                "name": "hpcd_USB_FS.IN_ep[0].tx_fifo_num",
+                "type": 3
+            },
+            {
+                "address": "0x20003bf7",
+                "name": "hpcd_USB_FS.IN_ep[0].type",
+                "type": 1
+            },
+            {
+                "address": "0x20003c08",
+                "name": "hpcd_USB_FS.IN_ep[0].xfer_buff",
+                "type": 5
+            },
+            {
+                "address": "0x20003c10",
+                "name": "hpcd_USB_FS.IN_ep[0].xfer_count",
+                "type": 5
+            },
+            {
+                "address": "0x20003c18",
+                "name": "hpcd_USB_FS.IN_ep[0].xfer_fill_db",
+                "type": 1
+            },
+            {
+                "address": "0x20003c0c",
+                "name": "hpcd_USB_FS.IN_ep[0].xfer_len",
+                "type": 5
+            },
+            {
+                "address": "0x20003c14",
+                "name": "hpcd_USB_FS.IN_ep[0].xfer_len_db",
+                "type": 5
+            },
+            {
+                "address": "0x20003bec",
+                "name": "hpcd_USB_FS.Init.battery_charging_enable",
+                "type": 5
+            },
+            {
+                "address": "0x20003bd0",
+                "name": "hpcd_USB_FS.Init.dev_endpoints",
+                "type": 5
+            },
+            {
+                "address": "0x20003bd8",
+                "name": "hpcd_USB_FS.Init.ep0_mps",
+                "type": 5
+            },
+            {
+                "address": "0x20003be4",
+                "name": "hpcd_USB_FS.Init.low_power_enable",
+                "type": 5
+            },
+            {
+                "address": "0x20003be8",
+                "name": "hpcd_USB_FS.Init.lpm_enable",
+                "type": 5
+            },
+            {
+                "address": "0x20003bdc",
+                "name": "hpcd_USB_FS.Init.phy_itface",
+                "type": 5
+            },
+            {
+                "address": "0x20003be0",
+                "name": "hpcd_USB_FS.Init.Sof_enable",
+                "type": 5
+            },
+            {
+                "address": "0x20003bd4",
+                "name": "hpcd_USB_FS.Init.speed",
+                "type": 5
+            },
+            {
+                "address": "0x20003bcc",
+                "name": "hpcd_USB_FS.Instance",
+                "type": 5
+            },
+            {
+                "address": "0x20003e74",
+                "name": "hpcd_USB_FS.Lock",
+                "type": 2
+            },
+            {
+                "address": "0x20003eac",
+                "name": "hpcd_USB_FS.LPM_State",
+                "type": 2
+            },
+            {
+                "address": "0x20003d38",
+                "name": "hpcd_USB_FS.OUT_ep[0].data_pid_start",
+                "type": 1
+            },
+            {
+                "address": "0x20003d40",
+                "name": "hpcd_USB_FS.OUT_ep[0].doublebuffer",
+                "type": 1
+            },
+            {
+                "address": "0x20003d35",
+                "name": "hpcd_USB_FS.OUT_ep[0].is_in",
+                "type": 1
+            },
+            {
+                "address": "0x20003d36",
+                "name": "hpcd_USB_FS.OUT_ep[0].is_stall",
+                "type": 1
+            },
+            {
+                "address": "0x20003d44",
+                "name": "hpcd_USB_FS.OUT_ep[0].maxpacket",
+                "type": 5
+            },
+            {
+                "address": "0x20003d34",
+                "name": "hpcd_USB_FS.OUT_ep[0].num",
+                "type": 1
+            },
+            {
+                "address": "0x20003d3c",
+                "name": "hpcd_USB_FS.OUT_ep[0].pmaaddr0",
+                "type": 3
+            },
+            {
+                "address": "0x20003d3e",
+                "name": "hpcd_USB_FS.OUT_ep[0].pmaaddr1",
+                "type": 3
+            },
+            {
+                "address": "0x20003d3a",
+                "name": "hpcd_USB_FS.OUT_ep[0].pmaadress",
+                "type": 3
+            },
+            {
+                "address": "0x20003d42",
+                "name": "hpcd_USB_FS.OUT_ep[0].tx_fifo_num",
+                "type": 3
+            },
+            {
+                "address": "0x20003d37",
+                "name": "hpcd_USB_FS.OUT_ep[0].type",
+                "type": 1
+            },
+            {
+                "address": "0x20003d48",
+                "name": "hpcd_USB_FS.OUT_ep[0].xfer_buff",
+                "type": 5
+            },
+            {
+                "address": "0x20003d50",
+                "name": "hpcd_USB_FS.OUT_ep[0].xfer_count",
+                "type": 5
+            },
+            {
+                "address": "0x20003d58",
+                "name": "hpcd_USB_FS.OUT_ep[0].xfer_fill_db",
+                "type": 1
+            },
+            {
+                "address": "0x20003d4c",
+                "name": "hpcd_USB_FS.OUT_ep[0].xfer_len",
+                "type": 5
+            },
+            {
+                "address": "0x20003d54",
+                "name": "hpcd_USB_FS.OUT_ep[0].xfer_len_db",
+                "type": 5
+            },
+            {
+                "address": "0x20003eb4",
+                "name": "hpcd_USB_FS.pData",
+                "type": 5
+            },
+            {
+                "address": "0x20003e7c",
+                "name": "hpcd_USB_FS.Setup[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20003e75",
+                "name": "hpcd_USB_FS.State",
+                "type": 2
+            },
+            {
+                "address": "0x20003bf0",
+                "name": "hpcd_USB_FS.USB_Address",
+                "type": 1
+            },
+            {
+                "address": "0x2000151c",
+                "name": "htim3.Channel",
+                "type": 2
+            },
+            {
+                "address": "0x2000151c",
+                "name": "htim3.Channel",
+                "type": 2
+            },
+            {
+                "address": "0x20001542",
+                "name": "htim3.ChannelNState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x20001542",
+                "name": "htim3.ChannelNState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x2000153e",
+                "name": "htim3.ChannelState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x2000153e",
+                "name": "htim3.ChannelState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x20001546",
+                "name": "htim3.DMABurstState",
+                "type": 2
+            },
+            {
+                "address": "0x20001546",
+                "name": "htim3.DMABurstState",
+                "type": 2
+            },
+            {
+                "address": "0x20001520",
+                "name": "htim3.hdma[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20001520",
+                "name": "htim3.hdma[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20001518",
+                "name": "htim3.Init.AutoReloadPreload",
+                "type": 5
+            },
+            {
+                "address": "0x20001518",
+                "name": "htim3.Init.AutoReloadPreload",
+                "type": 5
+            },
+            {
+                "address": "0x20001510",
+                "name": "htim3.Init.ClockDivision",
+                "type": 5
+            },
+            {
+                "address": "0x20001510",
+                "name": "htim3.Init.ClockDivision",
+                "type": 5
+            },
+            {
+                "address": "0x20001508",
+                "name": "htim3.Init.CounterMode",
+                "type": 5
+            },
+            {
+                "address": "0x20001508",
+                "name": "htim3.Init.CounterMode",
+                "type": 5
+            },
+            {
+                "address": "0x2000150c",
+                "name": "htim3.Init.Period",
+                "type": 5
+            },
+            {
+                "address": "0x2000150c",
+                "name": "htim3.Init.Period",
+                "type": 5
+            },
+            {
+                "address": "0x20001504",
+                "name": "htim3.Init.Prescaler",
+                "type": 5
+            },
+            {
+                "address": "0x20001504",
+                "name": "htim3.Init.Prescaler",
+                "type": 5
+            },
+            {
+                "address": "0x20001514",
+                "name": "htim3.Init.RepetitionCounter",
+                "type": 5
+            },
+            {
+                "address": "0x20001514",
+                "name": "htim3.Init.RepetitionCounter",
+                "type": 5
+            },
+            {
+                "address": "0x20001500",
+                "name": "htim3.Instance",
+                "type": 5
+            },
+            {
+                "address": "0x20001500",
+                "name": "htim3.Instance",
+                "type": 5
+            },
+            {
+                "address": "0x2000153c",
+                "name": "htim3.Lock",
+                "type": 2
+            },
+            {
+                "address": "0x2000153c",
+                "name": "htim3.Lock",
+                "type": 2
+            },
+            {
+                "address": "0x2000153d",
+                "name": "htim3.State",
+                "type": 2
+            },
+            {
+                "address": "0x2000153d",
+                "name": "htim3.State",
+                "type": 2
+            },
+            {
+                "address": "0x200014d4",
+                "name": "htim4.Channel",
+                "type": 2
+            },
+            {
+                "address": "0x200014d4",
+                "name": "htim4.Channel",
+                "type": 2
+            },
+            {
+                "address": "0x200014fa",
+                "name": "htim4.ChannelNState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x200014fa",
+                "name": "htim4.ChannelNState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x200014f6",
+                "name": "htim4.ChannelState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x200014f6",
+                "name": "htim4.ChannelState[0]",
+                "type": 2
+            },
+            {
+                "address": "0x200014fe",
+                "name": "htim4.DMABurstState",
+                "type": 2
+            },
+            {
+                "address": "0x200014fe",
+                "name": "htim4.DMABurstState",
+                "type": 2
+            },
+            {
+                "address": "0x200014d8",
+                "name": "htim4.hdma[0]",
+                "type": 5
+            },
+            {
+                "address": "0x200014d8",
+                "name": "htim4.hdma[0]",
+                "type": 5
+            },
+            {
+                "address": "0x200014d0",
+                "name": "htim4.Init.AutoReloadPreload",
+                "type": 5
+            },
+            {
+                "address": "0x200014d0",
+                "name": "htim4.Init.AutoReloadPreload",
+                "type": 5
+            },
+            {
+                "address": "0x200014c8",
+                "name": "htim4.Init.ClockDivision",
+                "type": 5
+            },
+            {
+                "address": "0x200014c8",
+                "name": "htim4.Init.ClockDivision",
+                "type": 5
+            },
+            {
+                "address": "0x200014c0",
+                "name": "htim4.Init.CounterMode",
+                "type": 5
+            },
+            {
+                "address": "0x200014c0",
+                "name": "htim4.Init.CounterMode",
+                "type": 5
+            },
+            {
+                "address": "0x200014c4",
+                "name": "htim4.Init.Period",
+                "type": 5
+            },
+            {
+                "address": "0x200014c4",
+                "name": "htim4.Init.Period",
+                "type": 5
+            },
+            {
+                "address": "0x200014bc",
+                "name": "htim4.Init.Prescaler",
+                "type": 5
+            },
+            {
+                "address": "0x200014bc",
+                "name": "htim4.Init.Prescaler",
+                "type": 5
+            },
+            {
+                "address": "0x200014cc",
+                "name": "htim4.Init.RepetitionCounter",
+                "type": 5
+            },
+            {
+                "address": "0x200014cc",
+                "name": "htim4.Init.RepetitionCounter",
+                "type": 5
+            },
+            {
+                "address": "0x200014b8",
+                "name": "htim4.Instance",
+                "type": 5
+            },
+            {
+                "address": "0x200014b8",
+                "name": "htim4.Instance",
+                "type": 5
+            },
+            {
+                "address": "0x200014f4",
+                "name": "htim4.Lock",
+                "type": 2
+            },
+            {
+                "address": "0x200014f4",
+                "name": "htim4.Lock",
+                "type": 2
+            },
+            {
+                "address": "0x200014f5",
+                "name": "htim4.State",
+                "type": 2
+            },
+            {
+                "address": "0x200014f5",
+                "name": "htim4.State",
+                "type": 2
+            },
+            {
+                "address": "0x200031d6",
+                "name": "hUsbDeviceFS.dev_address",
+                "type": 1
+            },
+            {
+                "address": "0x20002f3c",
+                "name": "hUsbDeviceFS.dev_config",
+                "type": 5
+            },
+            {
+                "address": "0x20002f44",
+                "name": "hUsbDeviceFS.dev_config_status",
+                "type": 5
+            },
+            {
+                "address": "0x200031d7",
+                "name": "hUsbDeviceFS.dev_connection_status",
+                "type": 1
+            },
+            {
+                "address": "0x20002f40",
+                "name": "hUsbDeviceFS.dev_default_config",
+                "type": 5
+            },
+            {
+                "address": "0x200031d5",
+                "name": "hUsbDeviceFS.dev_old_state",
+                "type": 1
+            },
+            {
+                "address": "0x200031dc",
+                "name": "hUsbDeviceFS.dev_remote_wakeup",
+                "type": 5
+            },
+            {
+                "address": "0x20002f48",
+                "name": "hUsbDeviceFS.dev_speed",
+                "type": 2
+            },
+            {
+                "address": "0x200031d4",
+                "name": "hUsbDeviceFS.dev_state",
+                "type": 1
+            },
+            {
+                "address": "0x200031d8",
+                "name": "hUsbDeviceFS.dev_test_mode",
+                "type": 1
+            },
+            {
+                "address": "0x200031d0",
+                "name": "hUsbDeviceFS.ep0_data_len",
+                "type": 5
+            },
+            {
+                "address": "0x200031cc",
+                "name": "hUsbDeviceFS.ep0_state",
+                "type": 5
+            },
+            {
+                "address": "0x20002f50",
+                "name": "hUsbDeviceFS.ep_in[0].is_used",
+                "type": 5
+            },
+            {
+                "address": "0x20002f5c",
+                "name": "hUsbDeviceFS.ep_in[0].maxpacket",
+                "type": 5
+            },
+            {
+                "address": "0x20002f58",
+                "name": "hUsbDeviceFS.ep_in[0].rem_length",
+                "type": 5
+            },
+            {
+                "address": "0x20002f4c",
+                "name": "hUsbDeviceFS.ep_in[0].status",
+                "type": 5
+            },
+            {
+                "address": "0x20002f54",
+                "name": "hUsbDeviceFS.ep_in[0].total_length",
+                "type": 5
+            },
+            {
+                "address": "0x20003090",
+                "name": "hUsbDeviceFS.ep_out[0].is_used",
+                "type": 5
+            },
+            {
+                "address": "0x2000309c",
+                "name": "hUsbDeviceFS.ep_out[0].maxpacket",
+                "type": 5
+            },
+            {
+                "address": "0x20003098",
+                "name": "hUsbDeviceFS.ep_out[0].rem_length",
+                "type": 5
+            },
+            {
+                "address": "0x2000308c",
+                "name": "hUsbDeviceFS.ep_out[0].status",
+                "type": 5
+            },
+            {
+                "address": "0x20003094",
+                "name": "hUsbDeviceFS.ep_out[0].total_length",
+                "type": 5
+            },
+            {
+                "address": "0x20002f38",
+                "name": "hUsbDeviceFS.id",
+                "type": 1
+            },
+            {
+                "address": "0x200031ec",
+                "name": "hUsbDeviceFS.pClass",
+                "type": 5
+            },
+            {
+                "address": "0x200031f0",
+                "name": "hUsbDeviceFS.pClassData",
+                "type": 5
+            },
+            {
+                "address": "0x200031f8",
+                "name": "hUsbDeviceFS.pData",
+                "type": 5
+            },
+            {
+                "address": "0x200031e8",
+                "name": "hUsbDeviceFS.pDesc",
+                "type": 5
+            },
+            {
+                "address": "0x200031f4",
+                "name": "hUsbDeviceFS.pUserData",
+                "type": 5
+            },
+            {
+                "address": "0x200031e0",
+                "name": "hUsbDeviceFS.request.bmRequest",
+                "type": 1
+            },
+            {
+                "address": "0x200031e1",
+                "name": "hUsbDeviceFS.request.bRequest",
+                "type": 1
+            },
+            {
+                "address": "0x200031e4",
+                "name": "hUsbDeviceFS.request.wIndex",
+                "type": 3
+            },
+            {
+                "address": "0x200031e6",
+                "name": "hUsbDeviceFS.request.wLength",
+                "type": 3
+            },
+            {
+                "address": "0x200031e2",
+                "name": "hUsbDeviceFS.request.wValue",
+                "type": 3
+            },
+            {
+                "address": "0x20000694",
+                "name": "KbchecktaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20001754",
+                "name": "measured_freq",
+                "type": 5,
+                "checked": true
+            },
+            {
+                "address": "0x2000154c",
+                "name": "measuredfreqMbox",
+                "type": 5
+            },
+            {
+                "address": "0x20001764",
+                "name": "OS_CPU_ExceptStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x2000175c",
+                "name": "OS_CPU_ExceptStkBase",
+                "type": 5
+            },
+            {
+                "address": "0x20001760",
+                "name": "OS_KA_BASEPRI_Boundary",
+                "type": 5
+            },
+            {
+                "address": "0x20002118",
+                "name": "OSCPUUsage",
+                "type": 1,
+                "checked": true
+            },
+            {
+                "address": "0x20002108",
+                "name": "OSCtxSwCtr",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6f0",
+                "name": "OSDataSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b680",
+                "name": "OSDebugEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b684",
+                "name": "OSEndiannessTest",
+                "type": 5
+            },
+            {
+                "address": "0x0800b688",
+                "name": "OSEventEn",
+                "type": 3
+            },
+            {
+                "address": "0x20002394",
+                "name": "OSEventFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x0800b68a",
+                "name": "OSEventMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b692",
+                "name": "OSEventMultiEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b68c",
+                "name": "OSEventNameEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b68e",
+                "name": "OSEventSize",
+                "type": 3
+            },
+            {
+                "address": "0x200025b4",
+                "name": "OSEventTbl[0].OSEventCnt",
+                "type": 3
+            },
+            {
+                "address": "0x200025b6",
+                "name": "OSEventTbl[0].OSEventGrp",
+                "type": 1
+            },
+            {
+                "address": "0x200025c0",
+                "name": "OSEventTbl[0].OSEventName",
+                "type": 5
+            },
+            {
+                "address": "0x200025b0",
+                "name": "OSEventTbl[0].OSEventPtr",
+                "type": 5
+            },
+            {
+                "address": "0x200025b7",
+                "name": "OSEventTbl[0].OSEventTbl[0]",
+                "type": 1
+            },
+            {
+                "address": "0x200025ac",
+                "name": "OSEventTbl[0].OSEventType",
+                "type": 1
+            },
+            {
+                "address": "0x0800b690",
+                "name": "OSEventTblSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b694",
+                "name": "OSFlagEn",
+                "type": 3
+            },
+            {
+                "address": "0x20002e2c",
+                "name": "OSFlagFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x0800b696",
+                "name": "OSFlagGrpSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b69c",
+                "name": "OSFlagMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b69e",
+                "name": "OSFlagNameEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b698",
+                "name": "OSFlagNodeSize",
+                "type": 3
+            },
+            {
+                "address": "0x20001bbc",
+                "name": "OSFlagTbl[0].OSFlagFlags",
+                "type": 3
+            },
+            {
+                "address": "0x20001bc0",
+                "name": "OSFlagTbl[0].OSFlagName",
+                "type": 5
+            },
+            {
+                "address": "0x20001bb4",
+                "name": "OSFlagTbl[0].OSFlagType",
+                "type": 1
+            },
+            {
+                "address": "0x20001bb8",
+                "name": "OSFlagTbl[0].OSFlagWaitList",
+                "type": 5
+            },
+            {
+                "address": "0x0800b69a",
+                "name": "OSFlagWidth",
+                "type": 3
+            },
+            {
+                "address": "0x20001bac",
+                "name": "OSIdleCtr",
+                "type": 5
+            },
+            {
+                "address": "0x20002110",
+                "name": "OSIdleCtrMax",
+                "type": 5
+            },
+            {
+                "address": "0x20002f34",
+                "name": "OSIdleCtrRun",
+                "type": 5
+            },
+            {
+                "address": "0x20002398",
+                "name": "OSIntNesting",
+                "type": 1
+            },
+            {
+                "address": "0x20001ba0",
+                "name": "OSLockNesting",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6a0",
+                "name": "OSLowestPrio",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6a2",
+                "name": "OSMboxEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6a4",
+                "name": "OSMemEn",
+                "type": 3
+            },
+            {
+                "address": "0x2000211c",
+                "name": "OSMemFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6a6",
+                "name": "OSMemMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6a8",
+                "name": "OSMemNameEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6aa",
+                "name": "OSMemSize",
+                "type": 3
+            },
+            {
+                "address": "0x20001e8c",
+                "name": "OSMemTbl[0].OSMemAddr",
+                "type": 5
+            },
+            {
+                "address": "0x20001e94",
+                "name": "OSMemTbl[0].OSMemBlkSize",
+                "type": 5
+            },
+            {
+                "address": "0x20001e90",
+                "name": "OSMemTbl[0].OSMemFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x20001ea0",
+                "name": "OSMemTbl[0].OSMemName",
+                "type": 5
+            },
+            {
+                "address": "0x20001e98",
+                "name": "OSMemTbl[0].OSMemNBlks",
+                "type": 5
+            },
+            {
+                "address": "0x20001e9c",
+                "name": "OSMemTbl[0].OSMemNFree",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6ac",
+                "name": "OSMemTblSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6ae",
+                "name": "OSMutexEn",
+                "type": 3
+            },
+            {
+                "address": "0x20001e84",
+                "name": "OSPrioCur",
+                "type": 1
+            },
+            {
+                "address": "0x20001bb2",
+                "name": "OSPrioHighRdy",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6b0",
+                "name": "OSPtrSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6b2",
+                "name": "OSQEn",
+                "type": 3
+            },
+            {
+                "address": "0x20002184",
+                "name": "OSQFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6b4",
+                "name": "OSQMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6b6",
+                "name": "OSQSize",
+                "type": 3
+            },
+            {
+                "address": "0x20002128",
+                "name": "OSQTbl[0].OSQEnd",
+                "type": 5
+            },
+            {
+                "address": "0x20002136",
+                "name": "OSQTbl[0].OSQEntries",
+                "type": 3
+            },
+            {
+                "address": "0x2000212c",
+                "name": "OSQTbl[0].OSQIn",
+                "type": 5
+            },
+            {
+                "address": "0x20002130",
+                "name": "OSQTbl[0].OSQOut",
+                "type": 5
+            },
+            {
+                "address": "0x20002120",
+                "name": "OSQTbl[0].OSQPtr",
+                "type": 5
+            },
+            {
+                "address": "0x20002134",
+                "name": "OSQTbl[0].OSQSize",
+                "type": 3
+            },
+            {
+                "address": "0x20002124",
+                "name": "OSQTbl[0].OSQStart",
+                "type": 5
+            },
+            {
+                "address": "0x20002188",
+                "name": "OSRdyGrp",
+                "type": 1
+            },
+            {
+                "address": "0x2000218c",
+                "name": "OSRdyTbl[0]",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6b8",
+                "name": "OSRdyTblSize",
+                "type": 3
+            },
+            {
+                "address": "0x20001ba9",
+                "name": "OSRunning",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6ba",
+                "name": "OSSemEn",
+                "type": 3
+            },
+            {
+                "address": "0x20002e30",
+                "name": "OSStatRdy",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6bc",
+                "name": "OSStkWidth",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6be",
+                "name": "OSTaskCreateEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6c0",
+                "name": "OSTaskCreateExtEn",
+                "type": 3
+            },
+            {
+                "address": "0x20002119",
+                "name": "OSTaskCtr",
+                "type": 1,
+                "checked": true
+            },
+            {
+                "address": "0x0800b6c2",
+                "name": "OSTaskDelEn",
+                "type": 3
+            },
+            {
+                "address": "0x200023ac",
+                "name": "OSTaskIdleStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6c4",
+                "name": "OSTaskIdleStkSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6c8",
+                "name": "OSTaskMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6ca",
+                "name": "OSTaskNameEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6c6",
+                "name": "OSTaskProfileEn",
+                "type": 3
+            },
+            {
+                "address": "0x20001ba8",
+                "name": "OSTaskRegNextAvailID",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6cc",
+                "name": "OSTaskStatEn",
+                "type": 3
+            },
+            {
+                "address": "0x20001f08",
+                "name": "OSTaskStatStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6d0",
+                "name": "OSTaskStatStkChkEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6ce",
+                "name": "OSTaskStatStkSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6d2",
+                "name": "OSTaskSwHookEn",
+                "type": 3
+            },
+            {
+                "address": "0x2000239c",
+                "name": "OSTCBCur",
+                "type": 5
+            },
+            {
+                "address": "0x20002114",
+                "name": "OSTCBFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x20002180",
+                "name": "OSTCBHighRdy",
+                "type": 5
+            },
+            {
+                "address": "0x20001e88",
+                "name": "OSTCBList",
+                "type": 5
+            },
+            {
+                "address": "0x20002e34",
+                "name": "OSTCBPrioTbl[0]",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6d4",
+                "name": "OSTCBPrioTblMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6d6",
+                "name": "OSTCBSize",
+                "type": 3
+            },
+            {
+                "address": "0x200026d5",
+                "name": "OSTCBTbl[0].OSTCBBitX",
+                "type": 1
+            },
+            {
+                "address": "0x200026d6",
+                "name": "OSTCBTbl[0].OSTCBBitY",
+                "type": 1
+            },
+            {
+                "address": "0x200026d8",
+                "name": "OSTCBTbl[0].OSTCBCtxSwCtr",
+                "type": 5
+            },
+            {
+                "address": "0x200026e0",
+                "name": "OSTCBTbl[0].OSTCBCyclesStart",
+                "type": 5
+            },
+            {
+                "address": "0x200026dc",
+                "name": "OSTCBTbl[0].OSTCBCyclesTot",
+                "type": 5
+            },
+            {
+                "address": "0x200026d7",
+                "name": "OSTCBTbl[0].OSTCBDelReq",
+                "type": 1
+            },
+            {
+                "address": "0x200026cc",
+                "name": "OSTCBTbl[0].OSTCBDly",
+                "type": 5
+            },
+            {
+                "address": "0x200026bc",
+                "name": "OSTCBTbl[0].OSTCBEventMultiPtr",
+                "type": 5
+            },
+            {
+                "address": "0x200026b8",
+                "name": "OSTCBTbl[0].OSTCBEventPtr",
+                "type": 5
+            },
+            {
+                "address": "0x200026a0",
+                "name": "OSTCBTbl[0].OSTCBExtPtr",
+                "type": 5
+            },
+            {
+                "address": "0x200026c4",
+                "name": "OSTCBTbl[0].OSTCBFlagNode",
+                "type": 5
+            },
+            {
+                "address": "0x200026c8",
+                "name": "OSTCBTbl[0].OSTCBFlagsRdy",
+                "type": 3
+            },
+            {
+                "address": "0x200026ae",
+                "name": "OSTCBTbl[0].OSTCBId",
+                "type": 3
+            },
+            {
+                "address": "0x200026c0",
+                "name": "OSTCBTbl[0].OSTCBMsg",
+                "type": 5
+            },
+            {
+                "address": "0x200026b0",
+                "name": "OSTCBTbl[0].OSTCBNext",
+                "type": 5
+            },
+            {
+                "address": "0x200026ac",
+                "name": "OSTCBTbl[0].OSTCBOpt",
+                "type": 3
+            },
+            {
+                "address": "0x200026b4",
+                "name": "OSTCBTbl[0].OSTCBPrev",
+                "type": 5
+            },
+            {
+                "address": "0x200026d2",
+                "name": "OSTCBTbl[0].OSTCBPrio",
+                "type": 1
+            },
+            {
+                "address": "0x200026f0",
+                "name": "OSTCBTbl[0].OSTCBRegTbl[0]",
+                "type": 5
+            },
+            {
+                "address": "0x200026d0",
+                "name": "OSTCBTbl[0].OSTCBStat",
+                "type": 1
+            },
+            {
+                "address": "0x200026d1",
+                "name": "OSTCBTbl[0].OSTCBStatPend",
+                "type": 1
+            },
+            {
+                "address": "0x200026e4",
+                "name": "OSTCBTbl[0].OSTCBStkBase",
+                "type": 5
+            },
+            {
+                "address": "0x200026a4",
+                "name": "OSTCBTbl[0].OSTCBStkBottom",
+                "type": 5
+            },
+            {
+                "address": "0x2000269c",
+                "name": "OSTCBTbl[0].OSTCBStkPtr",
+                "type": 5
+            },
+            {
+                "address": "0x200026a8",
+                "name": "OSTCBTbl[0].OSTCBStkSize",
+                "type": 5
+            },
+            {
+                "address": "0x200026e8",
+                "name": "OSTCBTbl[0].OSTCBStkUsed",
+                "type": 5
+            },
+            {
+                "address": "0x200026ec",
+                "name": "OSTCBTbl[0].OSTCBTaskName",
+                "type": 5
+            },
+            {
+                "address": "0x200026d3",
+                "name": "OSTCBTbl[0].OSTCBX",
+                "type": 1
+            },
+            {
+                "address": "0x200026d4",
+                "name": "OSTCBTbl[0].OSTCBY",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6d8",
+                "name": "OSTicksPerSec",
+                "type": 3
+            },
+            {
+                "address": "0x20001f04",
+                "name": "OSTickStepState",
+                "type": 1
+            },
+            {
+                "address": "0x200023a4",
+                "name": "OSTime",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6da",
+                "name": "OSTimeTickHookEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6e0",
+                "name": "OSTmrCfgMax",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6e2",
+                "name": "OSTmrCfgNameEn",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6e6",
+                "name": "OSTmrCfgTicksPerSec",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6e4",
+                "name": "OSTmrCfgWheelSize",
+                "type": 3
+            },
+            {
+                "address": "0x200010a8",
+                "name": "OSTmrCtr",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6de",
+                "name": "OSTmrEn",
+                "type": 3
+            },
+            {
+                "address": "0x2000210c",
+                "name": "OSTmrFree",
+                "type": 3
+            },
+            {
+                "address": "0x20001b64",
+                "name": "OSTmrFreeList",
+                "type": 5
+            },
+            {
+                "address": "0x200023a8",
+                "name": "OSTmrSem",
+                "type": 5
+            },
+            {
+                "address": "0x20001ba4",
+                "name": "OSTmrSemSignal",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6e8",
+                "name": "OSTmrSize",
+                "type": 3
+            },
+            {
+                "address": "0x20002194",
+                "name": "OSTmrTaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20001c08",
+                "name": "OSTmrTbl[0].OSTmrCallback",
+                "type": 5
+            },
+            {
+                "address": "0x20001c0c",
+                "name": "OSTmrTbl[0].OSTmrCallbackArg",
+                "type": 5
+            },
+            {
+                "address": "0x20001c1c",
+                "name": "OSTmrTbl[0].OSTmrDly",
+                "type": 5
+            },
+            {
+                "address": "0x20001c18",
+                "name": "OSTmrTbl[0].OSTmrMatch",
+                "type": 5
+            },
+            {
+                "address": "0x20001c24",
+                "name": "OSTmrTbl[0].OSTmrName",
+                "type": 5
+            },
+            {
+                "address": "0x20001c10",
+                "name": "OSTmrTbl[0].OSTmrNext",
+                "type": 5
+            },
+            {
+                "address": "0x20001c28",
+                "name": "OSTmrTbl[0].OSTmrOpt",
+                "type": 1
+            },
+            {
+                "address": "0x20001c20",
+                "name": "OSTmrTbl[0].OSTmrPeriod",
+                "type": 5
+            },
+            {
+                "address": "0x20001c14",
+                "name": "OSTmrTbl[0].OSTmrPrev",
+                "type": 5
+            },
+            {
+                "address": "0x20001c29",
+                "name": "OSTmrTbl[0].OSTmrState",
+                "type": 1
+            },
+            {
+                "address": "0x20001c04",
+                "name": "OSTmrTbl[0].OSTmrType",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6ea",
+                "name": "OSTmrTblSize",
+                "type": 3
+            },
+            {
+                "address": "0x200023a0",
+                "name": "OSTmrTime",
+                "type": 5
+            },
+            {
+                "address": "0x20001bb0",
+                "name": "OSTmrUsed",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6ec",
+                "name": "OSTmrWheelSize",
+                "type": 3
+            },
+            {
+                "address": "0x20001b6c",
+                "name": "OSTmrWheelTbl[0].OSTmrEntries",
+                "type": 3
+            },
+            {
+                "address": "0x20001b68",
+                "name": "OSTmrWheelTbl[0].OSTmrFirst",
+                "type": 5
+            },
+            {
+                "address": "0x0800b6ee",
+                "name": "OSTmrWheelTblSize",
+                "type": 3
+            },
+            {
+                "address": "0x0800b6f4",
+                "name": "OSUnMapTbl[0]",
+                "type": 1
+            },
+            {
+                "address": "0x0800b6dc",
+                "name": "OSVersionNbr",
+                "type": 3
+            },
+            {
+                "address": "0x20001758",
+                "name": "output_mode",
+                "type": 3,
+                "checked": true
+            },
+            {
+                "address": "0x20000894",
+                "name": "Seq1TaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20000a94",
+                "name": "Seq2TaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20000c94",
+                "name": "Seq3TaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20001552",
+                "name": "seq_number",
+                "type": 3,
+                "checked": true
+            },
+            {
+                "address": "0x20001550",
+                "name": "sin_gen_freq",
+                "type": 3,
+                "checked": true
+            },
+            {
+                "address": "0x20001554",
+                "name": "StartupTaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20000e94",
+                "name": "StatshowtaskStk[0]",
+                "type": 5
+            },
+            {
+                "address": "0x20001548",
+                "name": "statusMbox",
+                "type": 5
+            },
+            {
+                "address": "0x20000100",
+                "name": "SystemCoreClock",
+                "type": 5
+            },
+            {
+                "address": "0x20000128",
+                "name": "USBD_CDC.DataIn",
+                "type": 5
+            },
+            {
+                "address": "0x2000012c",
+                "name": "USBD_CDC.DataOut",
+                "type": 5
+            },
+            {
+                "address": "0x20000118",
+                "name": "USBD_CDC.DeInit",
+                "type": 5
+            },
+            {
+                "address": "0x20000124",
+                "name": "USBD_CDC.EP0_RxReady",
+                "type": 5
+            },
+            {
+                "address": "0x20000120",
+                "name": "USBD_CDC.EP0_TxSent",
+                "type": 5
+            },
+            {
+                "address": "0x20000148",
+                "name": "USBD_CDC.GetDeviceQualifierDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000140",
+                "name": "USBD_CDC.GetFSConfigDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x2000013c",
+                "name": "USBD_CDC.GetHSConfigDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000144",
+                "name": "USBD_CDC.GetOtherSpeedConfigDescriptor",
+                "type": 5
+            },
+            {
+                "address": "0x20000114",
+                "name": "USBD_CDC.Init",
+                "type": 5
+            },
+            {
+                "address": "0x20000134",
+                "name": "USBD_CDC.IsoINIncomplete",
+                "type": 5
+            },
+            {
+                "address": "0x20000138",
+                "name": "USBD_CDC.IsoOUTIncomplete",
+                "type": 5
+            },
+            {
+                "address": "0x2000011c",
+                "name": "USBD_CDC.Setup",
+                "type": 5
+            },
+            {
+                "address": "0x20000130",
+                "name": "USBD_CDC.SOF",
+                "type": 5
+            },
+            {
+                "address": "0x20000190",
+                "name": "USBD_CDC_CfgFSDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x2000014c",
+                "name": "USBD_CDC_CfgHSDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x20000108",
+                "name": "USBD_CDC_DeviceQualifierDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x200001d4",
+                "name": "USBD_CDC_OtherSpeedCfgDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x20000244",
+                "name": "USBD_FS_DeviceDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x20000220",
+                "name": "USBD_Interface_fops_FS.Control",
+                "type": 5
+            },
+            {
+                "address": "0x2000021c",
+                "name": "USBD_Interface_fops_FS.DeInit",
+                "type": 5
+            },
+            {
+                "address": "0x20000218",
+                "name": "USBD_Interface_fops_FS.Init",
+                "type": 5
+            },
+            {
+                "address": "0x20000224",
+                "name": "USBD_Interface_fops_FS.Receive",
+                "type": 5
+            },
+            {
+                "address": "0x20000258",
+                "name": "USBD_LangIDDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x200039cc",
+                "name": "USBD_StrDesc[0]",
+                "type": 1
+            },
+            {
+                "address": "0x2000025c",
+                "name": "USBD_StringSerial[0]",
+                "type": 1
+            },
+            {
+                "address": "0x200031fc",
+                "name": "UserRxBufferFS[0]",
+                "type": 1
+            },
+            {
+                "address": "0x200035e4",
+                "name": "UserTxBufferFS[0]",
+                "type": 1
+            },
+            {
+                "address": "0x20000104",
+                "name": "uwTickPrio",
+                "type": 5
+            }
+        ],
+        "expand": false,
+        "filename": "uCOSII.elf",
+        "exeModifiedTime": 1626220137993,
+        "configLastUpdate": 1626220207635
+    },
+    {
+        "id": "a086929b.734ff",
+        "type": "ui_group",
+        "name": "Group 1",
+        "tab": "e118b475.ed3af8",
+        "order": 1,
+        "disp": false,
+        "width": "10",
+        "collapse": false
+    },
+    {
+        "id": "814924b6.076658",
+        "type": "ui_group",
+        "name": "Group 2",
+        "tab": "e118b475.ed3af8",
+        "order": 2,
+        "disp": false,
+        "width": 5,
+        "collapse": false
+    },
+    {
+        "id": "e118b475.ed3af8",
+        "type": "ui_tab",
+        "name": "Test bench",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]
